@@ -1,0 +1,69 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  matrix-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [18, 20]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+          - os: windows-latest
+            platform: windows
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: matrix-badb1f2
+        run: |
+          echo "Building for ${{ matrix.platform }} with Node.js ${{ matrix.node-version }}"
+          echo "Matrix configuration: OS=${{ matrix.os }}, Node=${{ matrix.node-version }}"
+      
+      - name: Generate build info
+        run: |
+          echo "Build Information" > build-info.txt
+          echo "==================" >> build-info.txt
+          echo "Platform: ${{ matrix.platform }}" >> build-info.txt
+          echo "OS: ${{ matrix.os }}" >> build-info.txt
+          echo "Node Version: ${{ matrix.node-version }}" >> build-info.txt
+          echo "Build Time: $(date)" >> build-info.txt
+          echo "Job ID: ${{ github.run_id }}" >> build-info.txt
+        shell: bash
+      
+      - name: Create build artifact
+        run: |
+          mkdir -p build-output
+          echo '{"platform":"${{ matrix.platform }}","node":"${{ matrix.node-version }}","status":"success"}' > build-output/manifest.json
+          cp build-info.txt build-output/
+        shell: bash
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-badb1f2-${{ matrix.platform }}-node${{ matrix.node-version }}
+          path: build-output/
+          retention-days: 30
+      
+      - name: Display artifact info
+        run: |
+          echo "Artifact created: build-badb1f2-${{ matrix.platform }}-node${{ matrix.node-version }}"
+          echo "Contents:"
+          cat build-output/build-info.txt
+        shell: bash
